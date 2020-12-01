@@ -1,3 +1,3 @@
-module github.com/kataras/jwt
+module github.com/duclm2609/jwt
 
 go 1.15
