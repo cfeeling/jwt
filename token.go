@@ -3,6 +3,7 @@ package jwt
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 )
@@ -62,7 +63,7 @@ func decodeToken(alg Alg, key PublicKey, token []byte) ([]byte, []byte, []byte, 
 	}
 	// validate header equality.
 	expectedHeader := createHeaderRaw(alg.Name())
-	if !bytes.Equal(expectedHeader, headerDecoded) {
+	if !checkHeader(headerDecoded, expectedHeader) {
 		return nil, nil, nil, ErrTokenAlg
 	}
 
@@ -138,6 +139,23 @@ func createHeaderRaw(alg string) []byte {
 	}
 
 	return []byte(`{"alg":"` + alg + `","typ":"JWT"}`)
+}
+
+func checkHeader(decodedHeader, expectedHeader []byte) bool {
+	var decHeader, expectHeader map[string]interface{}
+	if err := json.Unmarshal(decodedHeader, &decHeader); err != nil {
+		return false
+	}
+	if err := json.Unmarshal(expectedHeader, &expectHeader); err != nil {
+		return false
+	}
+
+	for k, v := range expectHeader {
+		if dv, ok := decHeader[k]; !ok || v != dv {
+			return false
+		}
+	}
+	return true
 }
 
 func createSignature(alg Alg, key PrivateKey, headerAndPayload []byte) ([]byte, error) {
