@@ -3,6 +3,7 @@ package jwt
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 )
@@ -145,6 +146,23 @@ func createHeaderRaw(alg string) []byte {
 	return []byte(`{"alg":"` + alg + `","typ":"JWT"}`)
 }
 
+func checkHeader(decodedHeader, expectedHeader []byte) bool {
+	var decHeader, expectHeader map[string]interface{}
+	if err := json.Unmarshal(decodedHeader, &decHeader); err != nil {
+		return false
+	}
+	if err := json.Unmarshal(expectedHeader, &expectHeader); err != nil {
+		return false
+	}
+
+	for k, v := range expectHeader {
+		if dv, ok := decHeader[k]; !ok || v != dv {
+			return false
+		}
+	}
+	return true
+}
+
 func createHeaderReversed(alg string) []byte {
 	if header := fixedHeaders[alg]; header != nil {
 		return header.reversed
@@ -167,11 +185,13 @@ func compareHeader(alg string, headerDecoded []byte) bool {
 	// don't actually follow the correct order.
 	if headerDecoded[2] == 't' {
 		expectedHeader := createHeaderReversed(alg)
-		return bytes.Equal(expectedHeader, headerDecoded)
+		//return bytes.Equal(expectedHeader, headerDecoded)
+		return checkHeader(headerDecoded, expectedHeader)
 	}
 
 	expectedHeader := createHeaderRaw(alg)
-	return bytes.Equal(expectedHeader, headerDecoded)
+	//return bytes.Equal(expectedHeader, headerDecoded)
+	return checkHeader(headerDecoded, expectedHeader)
 }
 
 func createSignature(alg Alg, key PrivateKey, headerAndPayload []byte) ([]byte, error) {
