@@ -3,3 +3,4 @@
 /_examples/issue-*
 /_examples/feature-*
 cov.out
+/.idea

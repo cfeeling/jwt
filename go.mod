@@ -1,3 +1,3 @@
-module github.com/kataras/jwt
+module github.com/cfeeling/jwt
 
 go 1.15
